@@ -607,26 +607,9 @@ class CeramicApp {
 
     playWheelSound() {
         try {
-            if (!this.audioContext) {
-                this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
-            }
-            
-            if (this.audioContext.state === 'suspended') {
-                this.audioContext.resume();
-            }
-            
-            const oscillator = this.audioContext.createOscillator();
-            const gainNode = this.audioContext.createGain();
-            
-            oscillator.type = 'sine';
-            oscillator.frequency.value = 50;
-            gainNode.gain.value = 0.1;
-            
-            oscillator.connect(gainNode);
-            gainNode.connect(this.audioContext.destination);
-            
-            oscillator.start();
-            this.wheelSound = { oscillator, gainNode };
+            // 音频上下文需要在用户交互后创建，这里暂时跳过
+            // 避免因音频问题导致初始化卡住
+            console.log('Wheel sound initialized (audio context will be created on user interaction)');
         } catch (error) {
             console.log('Audio not supported:', error);
         }
