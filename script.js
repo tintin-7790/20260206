@@ -88,11 +88,27 @@ class CeramicApp {
     }
 
     setupControls() {
-        this.controls = new THREE.OrbitControls(this.camera, this.renderer.domElement);
-        this.controls.enableDamping = true;
-        this.controls.dampingFactor = 0.05;
-        this.controls.enableZoom = false;
-        this.controls.enablePan = false;
+        try {
+            // 尝试使用THREE.OrbitControls
+            if (typeof THREE.OrbitControls !== 'undefined') {
+                this.controls = new THREE.OrbitControls(this.camera, this.renderer.domElement);
+                this.controls.enableDamping = true;
+                this.controls.dampingFactor = 0.05;
+                this.controls.enableZoom = false;
+                this.controls.enablePan = false;
+            } else {
+                // 如果OrbitControls不可用，创建一个简单的控制对象
+                this.controls = {
+                    update: () => {}
+                };
+            }
+        } catch (error) {
+            console.error('Controls setup error:', error);
+            // 如果控件设置失败，创建一个简单的控制对象
+            this.controls = {
+                update: () => {}
+            };
+        }
     }
 
     setupLighting() {
@@ -109,9 +125,36 @@ class CeramicApp {
     }
 
     setupPostProcessing() {
-        const renderScene = new THREE.RenderPass(this.scene, this.camera);
-        this.composer = new THREE.EffectComposer(this.renderer);
-        this.composer.addPass(renderScene);
+        try {
+            // 简化后期处理，使用基本渲染器
+            this.composer = {
+                render: () => {
+                    if (this.renderer && this.scene && this.camera) {
+                        this.renderer.render(this.scene, this.camera);
+                    }
+                },
+                setSize: (width, height) => {
+                    if (this.renderer) {
+                        this.renderer.setSize(width, height);
+                    }
+                }
+            };
+        } catch (error) {
+            console.error('Post processing setup error:', error);
+            // 如果后期处理设置失败，使用基本渲染器
+            this.composer = {
+                render: () => {
+                    if (this.renderer && this.scene && this.camera) {
+                        this.renderer.render(this.scene, this.camera);
+                    }
+                },
+                setSize: (width, height) => {
+                    if (this.renderer) {
+                        this.renderer.setSize(width, height);
+                    }
+                }
+            };
+        }
     }
 
     setupEventListeners() {
