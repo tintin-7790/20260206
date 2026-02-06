@@ -52,15 +52,20 @@ class CeramicApp {
     }
 
     init() {
-        this.setupScene();
-        this.setupRenderer();
-        this.setupCamera();
-        this.setupControls();
-        this.setupLighting();
-        this.setupPostProcessing();
-        this.setupEventListeners();
-        this.setupUI();
-        this.startLoading();
+        try {
+            this.setupScene();
+            this.setupRenderer();
+            this.setupCamera();
+            this.setupControls();
+            this.setupLighting();
+            this.setupPostProcessing();
+            this.setupEventListeners();
+            this.setupUI();
+            this.startLoading();
+        } catch (error) {
+            console.error('Initialization error:', error);
+            this.showFeedback('初始化失败，请刷新页面重试');
+        }
     }
 
     setupScene() {
@@ -83,7 +88,7 @@ class CeramicApp {
     }
 
     setupControls() {
-        this.controls = new OrbitControls(this.camera, this.renderer.domElement);
+        this.controls = new THREE.OrbitControls(this.camera, this.renderer.domElement);
         this.controls.enableDamping = true;
         this.controls.dampingFactor = 0.05;
         this.controls.enableZoom = false;
@@ -104,8 +109,8 @@ class CeramicApp {
     }
 
     setupPostProcessing() {
-        const renderScene = new RenderPass(this.scene, this.camera);
-        this.composer = new EffectComposer(this.renderer);
+        const renderScene = new THREE.RenderPass(this.scene, this.camera);
+        this.composer = new THREE.EffectComposer(this.renderer);
         this.composer.addPass(renderScene);
     }
 
@@ -347,35 +352,52 @@ class CeramicApp {
         const segments = 32;
         const heightSegments = 64;
         
-        for (let i = 0; i <= heightSegments; i++) {
+        // 添加底部点
+        points.push(new THREE.Vector2(this.clayState.radius * 1.1, 0));
+        
+        // 添加中间点
+        for (let i = 1; i < heightSegments; i++) {
             const y = (i / heightSegments) * this.clayState.height;
             const radius = this.clayState.radius * (1 - (y / this.clayState.height) * 0.2) * this.clayState.smoothness;
             points.push(new THREE.Vector2(radius, y));
         }
         
+        // 添加顶部点
+        points.push(new THREE.Vector2(this.clayState.opening, this.clayState.height));
+        
         const latheGeometry = new THREE.LatheGeometry(points, segments);
         return latheGeometry;
     }
 
-    updateClayModel() {
-        if (!this.clayModel) return;
-        
-        const newGeometry = this.generateClayGeometry();
-        this.clayModel.geometry.dispose();
-        this.clayModel.geometry = newGeometry;
-        this.clayModel.position.y = this.clayState.height / 2 - 0.5;
-    }
+
 
     trimClayAtPoint(point) {
+        if (!this.clayModel) return;
+        
         const localPoint = this.clayModel.worldToLocal(point);
         const distanceFromCenter = Math.sqrt(localPoint.x * localPoint.x + localPoint.z * localPoint.z);
         
         if (distanceFromCenter < this.clayState.radius * 0.9) {
-            this.clayState.thickness = Math.max(0.02, this.clayState.thickness - 0.005);
+            // 平滑减少厚度
+            this.clayState.thickness = Math.max(0.02, this.clayState.thickness - 0.002);
+            
+            // 实时更新模型形状
+            this.updateClayModel();
+            
             if (this.clayState.thickness < 0.03) {
                 this.showFeedback('泥坯太薄了！');
             }
         }
+    }
+    
+    updateClayModel() {
+        if (!this.clayModel) return;
+        
+        const newGeometry = this.generateClayGeometry();
+        
+        this.clayModel.geometry.dispose();
+        this.clayModel.geometry = newGeometry;
+        this.clayModel.position.y = this.clayState.height / 2 - 0.5;
     }
 
     createTrimParticles(point) {
@@ -587,13 +609,15 @@ class CeramicApp {
 
     updateParticles() {
         this.particles.forEach((particle, index) => {
-            particle.position.add(particle.velocity);
-            particle.velocity.y -= 0.005;
-            particle.scale.multiplyScalar(0.98);
-            
-            if (particle.scale.x < 0.1) {
-                this.scene.remove(particle);
-                this.particles.splice(index, 1);
+            if (particle && particle.velocity) {
+                particle.position.add(particle.velocity);
+                particle.velocity.y -= 0.005;
+                particle.scale.multiplyScalar(0.98);
+                
+                if (particle.scale.x < 0.1 && this.scene) {
+                    this.scene.remove(particle);
+                    this.particles.splice(index, 1);
+                }
             }
         });
     }
@@ -645,8 +669,16 @@ class CeramicApp {
         }
         
         this.updateParticles();
-        this.controls.update();
-        this.composer.render();
+        if (this.controls) {
+            this.controls.update();
+        }
+        if (this.composer) {
+            try {
+                this.composer.render();
+            } catch (error) {
+                console.error('Render error:', error);
+            }
+        }
     }
 
     clearScene() {
@@ -671,46 +703,7 @@ class CeramicApp {
         }
     }
 
-    setupLighting() {
-        const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
-        this.scene.add(ambientLight);
 
-        const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
-        directionalLight.position.set(5, 10, 5);
-        this.scene.add(directionalLight);
-
-        const pointLight = new THREE.PointLight(0xffffff, 0.5);
-        pointLight.position.set(-5, 5, -5);
-        this.scene.add(pointLight);
-    }
-
-    setupPostProcessing() {
-        const renderScene = new RenderPass(this.scene, this.camera);
-        this.composer = new EffectComposer(this.renderer);
-        this.composer.addPass(renderScene);
-    }
-
-    setupCamera() {
-        this.camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
-        this.camera.position.set(0, 2, 5);
-        this.camera.lookAt(0, 0, 0);
-    }
-
-    setupRenderer() {
-        const container = document.getElementById('canvas-container');
-        this.renderer = new THREE.WebGLRenderer({ antialias: true });
-        this.renderer.setSize(window.innerWidth, window.innerHeight);
-        this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-        container.appendChild(this.renderer.domElement);
-    }
-
-    setupControls() {
-        this.controls = new OrbitControls(this.camera, this.renderer.domElement);
-        this.controls.enableDamping = true;
-        this.controls.dampingFactor = 0.05;
-        this.controls.enableZoom = false;
-        this.controls.enablePan = false;
-    }
 }
 
 let app;
