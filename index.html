@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>指尖非遗：景德镇制瓷（高保真版）</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="loading-screen">
+        <div class="loader-content">
+            <div class="spinner"></div>
+            <div class="loading-text">正在调配高岭土...<br><span class="sub-text">生成4K级程序化纹理</span></div>
+        </div>
+    </div>
+
+    <div id="canvas-container"></div>
+
+    <div id="ui-layer">
+        <div class="top-bar">
+            <div class="header-group">
+                <div class="stage-badge" id="stage-name">序章</div>
+                <h1 class="app-title">天工 · 开物</h1>
+            </div>
+
+            <div class="master-message">
+                <div class="avatar"><span class="emoji emoji1f474"></span></div>
+                <div class="bubble">
+                    <p id="master-text">瓷之魂，在于土与火的共舞。</p>
+                </div>
+            </div>
+        </div>
+
+        <div id="center-feedback" class="hidden">
+            <div class="feedback-icon"><span class="emoji emoji1f525"></span></div>
+            <div class="feedback-val" id="feedback-text">0°C</div>
+        </div>
+
+        <div class="bottom-panel">
+            <div id="control-content" class="control-content"></div>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/three@0.160.0/build/three.min.js"></script>
+    <script src="https://unpkg.com/three@0.160.0/examples/jsm/controls/OrbitControls.js"></script>
+    <script src="https://unpkg.com/three@0.160.0/examples/jsm/geometries/ParametricGeometry.js"></script>
+    <script src="https://unpkg.com/three@0.160.0/examples/jsm/postprocessing/EffectComposer.js"></script>
+    <script src="https://unpkg.com/three@0.160.0/examples/jsm/postprocessing/RenderPass.js"></script>
+    <script src="https://unpkg.com/three@0.160.0/examples/jsm/postprocessing/ShaderPass.js"></script>
+    <script src="https://unpkg.com/three@0.160.0/examples/jsm/postprocessing/OutlinePass.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
